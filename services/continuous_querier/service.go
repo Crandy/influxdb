@@ -343,11 +343,17 @@ type ContinuousQuery struct {
 	Database string
 	Info     *meta.ContinuousQueryInfo
 	LastRun  time.Time
+	Resample ResampleOptions
 	q        *influxql.SelectStatement
 }
 
 func (cq *ContinuousQuery) intoRP() string      { return cq.q.Target.Measurement.RetentionPolicy }
 func (cq *ContinuousQuery) setIntoRP(rp string) { cq.q.Target.Measurement.RetentionPolicy = rp }
+
+type ResampleOptions struct {
+	Every time.Duration
+	For   time.Duration
+}
 
 // NewContinuousQuery returns a ContinuousQuery object with a parsed influxql.CreateContinuousQueryStatement
 func NewContinuousQuery(database string, cqi *meta.ContinuousQueryInfo) (*ContinuousQuery, error) {
@@ -364,7 +370,11 @@ func NewContinuousQuery(database string, cqi *meta.ContinuousQueryInfo) (*Contin
 	cquery := &ContinuousQuery{
 		Database: database,
 		Info:     cqi,
-		q:        q.Source,
+		Resample: ResampleOptions{
+			Every: q.ResampleEvery,
+			For:   q.ResampleFor,
+		},
+		q: q.Source,
 	}
 
 	return cquery, nil
